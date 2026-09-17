@@ -2,82 +2,35 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Native HTML Popup</title>
-    <style>
-        body {
-            font-family: system-ui, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f4f4f9;
-        }
-
-        /* Trigger Button Styles */
-        .open-btn {
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        /* Popup Styles */
-        dialog {
-            border: none;
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            padding: 24px;
-            width: 320px;
-            text-align: center;
-        }
-
-        /* Backdrop Dimming */
-        dialog::backdrop {
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(2px);
-        }
-
-        .close-btn {
-            margin-top: 15px;
-            padding: 8px 16px;
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-    </style>
+    <title>Web Notification Example</title>
 </head>
 <body>
 
-    <!-- Trigger Button -->
-    <button class="open-btn" id="openPopup">Show Message Box</button>
-
-    <!-- Message Box Dialog -->
-    <dialog id="messageBox">
-        <h2>Notification</h2>
-        <p>This is a native HTML message popup box!</p>
-        <button class="close-btn" id="closePopup">Close</button>
-    </dialog>
+    <!-- A button to ask for permission safely -->
+    <button id="notifyBtn">Enable Notifications</button>
 
     <script>
-        const dialog = document.getElementById('messageBox');
-        const openBtn = document.getElementById('openPopup');
-        const closeBtn = document.getElementById('closePopup');
+        const button = document.getElementById('notifyBtn');
 
-        // Open the dialog modal natively
-        openBtn.addEventListener('click', () => {
-            dialog.showModal(); 
-        });
+        button.addEventListener('click', () => {
+            // 1. Check if the browser supports notifications
+            if (!("Notification" in window)) {
+                alert("This browser does not support desktop notifications.");
+                return;
+            }
 
-        // Close the dialog natively
-        closeBtn.addEventListener('click', () => {
-            dialog.close();
+            // 2. Request permission from the user
+            Notification.requestPermission().then((permission) => {
+                if (permission === "granted") {
+                    // 3. If granted, send a test notification
+                    new Notification("Notifications Enabled!", {
+                        body: "You will now receive updates from our website.",
+                        icon: "https://example.com" // Optional icon URL
+                    });
+                } else if (permission === "denied") {
+                    console.log("User blocked notifications.");
+                }
+            });
         });
     </script>
 

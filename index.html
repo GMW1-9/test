@@ -6,33 +6,40 @@
 </head>
 <body>
 
-    <!-- A button to ask for permission safely -->
+       <!-- Locate your button near the bottom of your body layout -->
     <button id="notifyBtn">Enable Notifications</button>
 
+    <!-- REPLACE YOUR ENTIRE EXISTING SCRIPT BLOCK WITH THIS ONE: -->
     <script>
-        const button = document.getElementById('notifyBtn');
+      const button = document.getElementById('notifyBtn');
 
-        button.addEventListener('click', () => {
-            // 1. Check if the browser supports notifications
-            if (!("Notification" in window)) {
-                alert("This browser does not support desktop notifications.");
-                return;
-            }
+      button.addEventListener('click', () => {
+        // 1. Check if the browser supports notifications
+        if (!("Notification" in window)) {
+          alert("This browser does not support desktop notifications.");
+          return;
+        }
 
-            // 2. Request permission from the user
-            Notification.requestPermission().then((permission) => {
-                if (permission === "granted") {
-                    // 3. If granted, send a test notification
-                    new Notification("Notifications Enabled!", {
-                        body: "You will now receive updates from our website.",
-                        icon: "cpw.png" // Optional icon URL
-                    });
-                } else if (permission === "denied") {
-                    console.log("User blocked notifications.");
-                }
+        // 2. Request permission from the user
+        Notification.requestPermission().then((permission) => {
+          if (permission === "granted") {
+            // 3. Create the notification
+            const notification = new Notification("Notifications Enabled!", {
+              body: "You will now receive updates from our website.",
+              icon: "cpw.png" 
             });
-        });
-    </script>
 
-</body>
+            // 4. Force it to open your website when clicked
+            notification.onclick = (event) => {
+              event.preventDefault(); 
+              window.open("https://gmw1-9.github.io/Catholic-PrayerWeb-by-GMW1-9/", "_blank");
+            };
+          } else if (permission === "denied") {
+            console.log("User blocked notifications.");
+          }
+        });
+      });
+    </script>
+  </body>
 </html>
+

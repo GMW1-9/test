@@ -2,44 +2,146 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Web Notification Example</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All-in-One Notification App</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            text-align: center;
+            padding: 40px 20px;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 { font-size: 24px; margin-bottom: 10px; }
+        p { color: #666; font-size: 14px; line-height: 1.5; }
+        button {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            margin-top: 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-grant { background-color: #007bff; color: white; }
+        .btn-grant:hover { background-color: #0056b3; }
+        .btn-trigger { background-color: #28a745; color: white; }
+        .btn-trigger:hover { background-color: #218838; }
+        .status {
+            margin-top: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #888;
+        }
+    </style>
 </head>
 <body>
 
-       <!-- Locate your button near the bottom of your body layout -->
-    <button id="notifyBtn">Update/Prayer/Encouragement Notifications</button>
+<div class="container">
+    <h1>Web Notifications</h1>
+    <p>This single file registers a virtual service worker to trigger alerts locally or across devices.</p>
+    
+    <button class="btn-grant" onclick="setupNotifications()">1. Enable Notifications</button>
+    <button class="btn-trigger" onclick="sendLocalNotification()">2. Test Notification</button>
+    
+    <div class="status" id="statusField">Status: Ready</div>
+</div>
 
-    <!-- REPLACE YOUR ENTIRE EXISTING SCRIPT BLOCK WITH THIS ONE: -->
-    <script>
-      const button = document.getElementById('notifyBtn');
+<script>
+// ==========================================
+// 1. THE SERVICE WORKER CODE (As a String)
+// ==========================================
+const serviceWorkerCode = `
+    self.addEventListener('push', function(event) {
+        const data = event.data ? event.data.json() : { title: 'Local Alert', body: 'Hello World!' };
+        const options = {
+            body: data.body,
+            icon: 'https://flaticon.com',
+            vibrate:,
+            data: { url: data.url || self.location.origin }
+        };
+        event.waitUntil(self.registration.showNotification(data.title, options));
+    });
 
-      button.addEventListener('click', () => {
-        // 1. Check if the browser supports notifications
-        if (!("Notification" in window)) {
-          alert("This browser does not support desktop notifications.");
-          return;
-        }
+    self.addEventListener('notificationclick', function(event) {
+        event.notification.close();
+        event.waitUntil(
+            clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+                for (let i = 0; i < clientList.length; i++) {
+                    let client = clientList[i];
+                    if ('focus' in client) return client.focus();
+                }
+                if (clients.openWindow) return clients.openWindow(event.notification.data.url);
+            })
+        );
+    });
+`;
 
-        // 2. Request permission from the user
-        Notification.requestPermission().then((permission) => {
-          if (permission === "granted") {
-            // 3. Create the notification
-            const notification = new Notification("Notifications Enabled!", {
-              body: "You will now receive updates from our website.",
-              icon: "cpw.png" 
-            });
+let globalRegistration = null;
 
-            // 4. Force it to open your website when clicked
-            notification.onclick = (event) => {
-              event.preventDefault(); 
-              window.open("https://gmw1-9.github.io/Catholic-PrayerWeb-by-GMW1-9/", "_blank");
-            };
-          } else if (permission === "denied") {
-            console.log("User blocked notifications.");
-          }
-        });
-      });
-    </script>
-  </body>
+// ==========================================
+// 2. FRONTEND LOGIC
+// ==========================================
+async function setupNotifications() {
+    const statusField = document.getElementById('statusField');
+    
+    if (!('serviceWorker' in navigator) || !('Notification' in window)) {
+        updateStatus('Push notifications not supported on this browser.', '#dc3545');
+        return;
+    }
+
+    // Ask user for system banner permission
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+        updateStatus('Permission Denied.', '#dc3545');
+        return;
+    }
+
+    try {
+        // Convert the Service Worker string into an active internal file link
+        const blob = new Blob([serviceWorkerCode], { type: 'application/javascript' });
+        const blobURL = URL.createObjectURL(blob);
+
+        // Register the dynamic Service Worker
+        globalRegistration = await navigator.serviceWorker.register(blobURL);
+        updateStatus('Notifications Enabled & Active!', '#28a745');
+    } catch (error) {
+        console.error(error);
+        updateStatus('Registration failed. Ensure you are on HTTPS or localhost.', '#dc3545');
+    }
+}
+
+// Triggers a simulated hardware notification push through the service worker
+function sendLocalNotification() {
+    if (!globalRegistration) {
+        alert('Please click "1. Enable Notifications" first!');
+        return;
+    }
+    
+    // Uses the registered worker instance to directly generate the phone/desktop banner
+    globalRegistration.showNotification('Hello Phone & Computer!', {
+        body: 'This notification fired directly out of a single-file application!',
+        icon: 'https://flaticon.com',
+        vibrate: [200, 100, 200]
+    });
+}
+
+function updateStatus(text, color) {
+    const statusField = document.getElementById('statusField');
+    statusField.innerText = `Status: ${text}`;
+    if (color) statusField.style.color = color;
+}
+</script>
+
+</body>
 </html>
-
